@@ -20,10 +20,20 @@ def main():
             break
         response = client.chat.completions.create(
             model="openai/gpt-oss-20b",
-            messages=messages
+            messages=messages,
+            stream=True
         )
-        assistant_message = response.choices[0].message.content
-        print(f"Assitant:{assistant_message}")
+        assistant_message = ""
+        print("Assistant: ", end="")
+        for chunk in response:
+            content = chunk.choices[0].delta.content or ""
+            assistant_message += content
+           
+            print(content, end="", flush=True)
+           
+        print()
+            
+            
         
         messages.append({'role': 'assistant', 'content': assistant_message})
         
