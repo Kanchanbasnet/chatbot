@@ -9,7 +9,20 @@ client = Groq(
     api_key=os.getenv("GROQ_API_KEY")
 )
     
-messages = []
+messages = [
+    {
+        "role": "system",
+        "content": (
+            "You are a helpful, friendly, and knowledgeable AI assistant. "
+            "Answer questions on any topic. "
+            "Always structure your answers as exactly 5 bullet points. "
+            "Keep each bullet point clear, concise, and relevant to the question. "
+            "Use simple language whenever possible. "
+            "For complex topics, explain the key ideas step by step. "
+            "If you are unsure about something, be honest rather than inventing facts."
+        )
+    }
+]
 
 def main():
     while True:
