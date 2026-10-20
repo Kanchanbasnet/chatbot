@@ -1,22 +1,31 @@
 import os
 
-import dotenv
-import streamlit as st
-from google import genai
+from dotenv import load_dotenv
+from groq import Groq
 
-st.title("Chatbot using Gemini API")
+load_dotenv()
 
-dotenv.load_dotenv()
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+client = Groq(
+    api_key=os.getenv("GROQ_API_KEY")
+)
+    
+messages = []
 
-user_input = st.text_input("Ask me a question")
-
-if st.button("Send") and user_input.strip():
-    with st.spinner("Thinking..."):
-        response = client.interactions.create(
-            model="gemini-3.8-flash",
-            input=user_input,
-            generation_config={"thinking_level": "low"},
+def main():
+    while True:
+        user_input = input("User:")
+        messages.append({'role': 'user', 'content': user_input})
+        if user_input.lower() == "bye":
+            print("Exiting the chat. Goodbye!")
+            break
+        response = client.chat.completions.create(
+            model="openai/gpt-oss-20b",
+            messages=messages
         )
-
-    st.write(response.output_text)
+        assistant_message = response.choices[0].message.content
+        print(f"Assitant:{assistant_message}")
+        
+        messages.append({'role': 'assistant', 'content': assistant_message})
+        
+if __name__ == "__main__":
+    main()
