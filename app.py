@@ -40,25 +40,43 @@ if user_input:
     with st.chat_message("user"):
         st.write(user_input)
     with st.chat_message('assistant'):
-        response = client.chat.completions.create(
-            model="openai/gpt-oss-20b",
-            messages=st.session_state.messages,
-            stream=True
-        )
-        def generate_response():
-            for chunk in response:
-                content = chunk.choices[0].delta.content or ""
-                if content:
-                    yield content
+        try:
+            response = client.chat.completions.create(
+                model="openai/gpt-oss-20b",
+                messages=st.session_state.messages,
+                stream=True,
+                extra_body={"stream_options" :{"include_usage": True}}
                 
-        assistant_message = st.write_stream(generate_response())
+        )
+            usage_info = {"usage": None}
+            def generate_response():
+                for chunk in response:
+                    if chunk.usage:
+                        usage_info["usage"] = chunk.usage
+                    if chunk.choices:
+                        content = chunk.choices[0].delta.content or ""
+                        if content:
+                            yield content
+            assistant_message = st.write_stream(generate_response())
+            st.session_state.messages.append({
+                    'role': 'assistant',
+                    'content': assistant_message
+                })
+            token_usage = usage_info["usage"]
+            if token_usage:
+                st.write(f"Input Token: {token_usage.prompt_tokens}")
+                st.write(f"Output Token: {token_usage.completion_tokens}")
+                st.write(f"Total Token: {token_usage.total_tokens}")
+                
+            
+        except Exception as e:
+            st.error(f"Error: {e}")
+            st.stop()
+                
       
                
     
-    st.session_state.messages.append({
-        'role': 'assistant',
-        'content': assistant_message
-    })
+   
     
     
     
