@@ -4,8 +4,6 @@ import requests
 import streamlit as st
 from dotenv import load_dotenv
 
-# from groq import Groq
-
 load_dotenv()
 url = os.getenv("BACKEND_URL")
 

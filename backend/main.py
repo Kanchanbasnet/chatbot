@@ -1,14 +1,9 @@
-import os
 
-from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
-from groq import Groq
 from pydantic import BaseModel
 
-load_dotenv()
-
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+from backend.services.llm_service import generate_response
 
 messages = [
     {
@@ -24,29 +19,29 @@ messages = [
 ]
 
 
-def generate_response():
-    response = client.chat.completions.create(
-        model="openai/gpt-oss-20b",
-        messages=messages,
-        stream=True,
-    )
-    for chunk in response:
-        if chunk.choices:
-            content = chunk.choices[0].delta.content or ""
-            if content:
-                yield content
+# def generate_response():
+#     response = client.chat.completions.create(
+#         model="openai/gpt-oss-20b",
+#         messages=messages,
+#         stream=True,
+#     )
+#     for chunk in response:
+#         if chunk.choices:
+#             content = chunk.choices[0].delta.content or ""
+#             if content:
+#                 yield content
 
 
-def stream_answer():
-    full_answer = ""
-    try:
-        for content in generate_response():
-            full_answer += content
-            yield content
+# def stream_answer():
+#     full_answer = ""
+#     try:
+#         for content in generate_response():
+#             full_answer += content
+#             yield content
 
-        messages.append({"role": "assistant", "content": full_answer})
-    except Exception:
-        yield "Error generating response"
+#         messages.append({"role": "assistant", "content": full_answer})
+#     except Exception:
+#         yield "Error generating response"
 
 
 class ChatRequest(BaseModel):
@@ -65,7 +60,11 @@ def home():
 def chat(request: ChatRequest):
     user_input = request.question
     messages.append({"role": "user", "content": user_input})
-    return StreamingResponse(
-        stream_answer(),
-        media_type="text/plain; charset=utf-8",
-    )
+    response = generate_response(messages)
+    messages.append({"role": "assistant", "content": response})
+    return {'answer': response}
+    
+    # return StreamingResponse(
+    #     stream_answer(),
+    #     media_type="text/plain; charset=utf-8",
+    # )
