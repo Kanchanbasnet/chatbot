@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.models.conversation_model import Conversation
@@ -29,9 +30,20 @@ def handle_chat(db: Session, question: str, conversation_id: int | None = None):
         if conversation is None:
             raise HTTPException(status_code=404, detail="Conversation not found.")
     conv_id = conversation.id
+    statement = (select(Message).where(Message.conversation_id == conv_id).order_by(Message.id.desc()).limit(10))
+    history = db.scalars(statement).all()
+    history.reverse()
     history = [{"role": m.role, "content": m.content} for m in conversation.messages]
     history.append({"role": "user", "content": question})
-    response = generate_response([*SYSTEM_PROMPT, *history])
+    try:
+        response = generate_response([*SYSTEM_PROMPT, *history])
+    except Exception:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to generate a response. Please try again."
+        )
+        
     db.add_all(
         [
             Message(conversation_id=conv_id, role="user", content=question),
