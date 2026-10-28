@@ -12,18 +12,7 @@ from backend.services.llm_service import generate_response
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = [
-    {
-        "role": "system",
-        "content": (
-            "You are a helpful, friendly, and knowledgeable AI assistant. "
-            "Answer questions on any topic. "
-            "Use simple language whenever possible. "
-            "For complex topics, explain the key ideas step by step. "
-            "If you are unsure about something, be honest rather than inventing facts."
-        ),
-    }
-]
+
 
 
 def handle_chat(
@@ -69,7 +58,7 @@ def handle_chat(
     )
 
     try:
-        response = generate_response([*SYSTEM_PROMPT, *history])
+        response = generate_response([*history], question)
 
     except Exception:
         logger.exception("Failed to generate LLM response")
