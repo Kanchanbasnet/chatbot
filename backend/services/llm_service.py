@@ -1,9 +1,8 @@
+import logging
 import os
 
 from dotenv import load_dotenv
 from groq import Groq
-
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -25,4 +24,6 @@ def generate_response(messages):
     
     except Exception:
         logger.exception("Failed to generate response from LLM.")
+        raise
+
     
