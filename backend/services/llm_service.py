@@ -14,39 +14,32 @@ SYSTEM_PROMPT = """
             For complex topics, explain the key ideas step by step. 
             If you are unsure about something, be honest rather than inventing facts.
         """
-    
 
 
 load_dotenv()
-llm = ChatGroq(
-            model="openai/gpt-oss-20b",
-            api_key=os.getenv("GROQ_API_KEY")
-            )
+llm = ChatGroq(model="openai/gpt-oss-20b", api_key=os.getenv("GROQ_API_KEY"))
 
 prompt = ChatPromptTemplate.from_messages([
-    ('system', SYSTEM_PROMPT),
+    ("system", SYSTEM_PROMPT),
     MessagesPlaceholder(variable_name="history"),
-    ("human", "{question}")
-]
-    
-)
-# Creating a chain here 
+    (
+        "human",
+        """
+        Context from external sources, if provided:
+        {context}
+
+        Question:
+        {question}
+        """,
+    ),
+])
+# Creating a chain here
 chain = prompt | llm
 
 
-def generate_response(history, question):
+def generate_response(history, question, context=""):
     logger.info("Sending message to LLM.")
-    try:
-        response = chain.invoke({
-            "history":  history,
-            "question": question
-        })
-        answer = response.content
-        logger.info("Successfully received response from LLM")
-        return answer
-    
-    except Exception:
-        logger.exception("Failed to generate response from LLM.")
-        raise
-
-    
+    response = chain.invoke({"history": history, "question": question, "context": context})
+    answer = response.content
+    logger.info("Successfully received response from LLM")
+    return answer

@@ -1,54 +1,33 @@
-
 import logging
 
 from fastapi import HTTPException
-from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from backend.models.conversation_model import Conversation
 from backend.models.message_model import Message
+from backend.services.context_service import get_context
+from backend.services.conversation_service import get_or_create_conversation
+from backend.services.history_service import get_conversation_history
 from backend.services.llm_service import generate_response
 
 logger = logging.getLogger(__name__)
-
-
 
 
 def handle_chat(
     db: Session,
     question: str,
     conversation_id: int | None = None,
+    url: str | None = None
 ):
-    if conversation_id is None:
-        conversation = Conversation()
-        db.add(conversation)
-        db.flush()
-    else:
-        conversation = db.get(Conversation, conversation_id)
 
-        if conversation is None:
-            raise HTTPException(
-                status_code=404,
-                detail="Conversation not found.",
-            )
-
+    conversation = get_or_create_conversation(db, conversation_id)
     conv_id = conversation.id
 
-    statement = (
-        select(Message)
-        .where(Message.conversation_id == conv_id)
-        .order_by(Message.id.desc())
-        .limit(10)
+    history = get_conversation_history(
+        db=db,
+        conversation_id=conv_id,
     )
-
-    history = db.scalars(statement).all()
-    history.reverse()
-
-    history = [
-        {"role": message.role, "content": message.content}
-        for message in history
-    ]
+    context = get_context(url)
 
     history.append(
         {
@@ -58,7 +37,7 @@ def handle_chat(
     )
 
     try:
-        response = generate_response([*history], question)
+        response = generate_response([*history], question, context)
 
     except Exception:
         logger.exception("Failed to generate LLM response")
