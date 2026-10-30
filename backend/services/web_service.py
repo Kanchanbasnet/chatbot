@@ -13,8 +13,6 @@ def scrape_website(url: str) -> str:
     )
     
     documents = loader.load()
-    print(documents)
     content = "\n\n".join(document.page_content for document in documents)
-    print(content)
     logger.info("Successfully scraped the website")
     return content
