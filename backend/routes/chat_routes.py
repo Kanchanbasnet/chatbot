@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
 from backend.services.chat_service import handle_chat
+from backend.services.file_upload_service import upload_file
 
 
 class ChatRequest(BaseModel):
@@ -23,3 +24,11 @@ def chat(body: ChatRequest, db:Session= Depends(get_db)):  # noqa: B008
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     return {"conversation_id": conversation_id, "answer": answer}
+
+@router.post("/upload")
+async def file_upload(file: UploadFile):
+    try:
+        response = await upload_file(file)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    return response
