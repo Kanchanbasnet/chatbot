@@ -1,28 +1,14 @@
-from io import BytesIO
 from pathlib import Path
 
 from fastapi import File, HTTPException, UploadFile
-from pypdf import PdfReader
 from sqlalchemy.orm import Session
 
 from backend.models.conversation_model import Conversation
 from backend.models.document_model import Document
-
-SUPPORTED_EXTENSIONS = {
-    ".pdf",
-    ".docx",
-    ".pptx",
-    ".txt",
-    ".xlsx",
-    ".xlsm"
-}
+from backend.services.document_loaders_service import LOADERS, load_files
 
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 
-def load_pdf_file(file_bytes: bytes):
-    reader = PdfReader(BytesIO(file_bytes))
-    pages = [page.extract_text() or "" for page in reader.pages]
-    return '\n\n'.join(pages)
 
 
 
@@ -39,19 +25,18 @@ async def upload_file(db: Session, conversation_id: int, file: UploadFile = File
     
     extension = Path(file.filename).suffix.lower()
     
-    if extension not in SUPPORTED_EXTENSIONS:
+    if extension not in LOADERS:
         raise HTTPException(400, 'File Type not supported.')
     
     content = await file.read()
-    text = load_pdf_file(content)
-    
-    if not text.strip():
-        raise HTTPException(
-            status_code=400,
-            detail="No text Found. The PDF may be a scanned image."
-        )
     if len(content) > MAX_FILE_SIZE:
         raise HTTPException(400, 'File length exceeds 10 MB limit')
+    
+    text = load_files(content, extension)
+    if not text.strip():
+        raise HTTPException(
+            400, "No text found. The file may be empty or a scanned image."
+        )
     
     document = Document(
         filename=file.filename,
