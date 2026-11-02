@@ -18,7 +18,8 @@ def handle_chat(
     question: str,
     conversation_id: int | None = None,
     url: str | None = None,
-    web_search: bool = False
+    web_search: bool = False,
+    document_id:int | None = None
 ):
 
     conversation = get_or_create_conversation(db, conversation_id)
@@ -28,7 +29,7 @@ def handle_chat(
         db=db,
         conversation_id=conv_id,
     )
-    context = get_context(query=question, url=url, web_search=web_search)
+    context = get_context(db, query=question,document_id=document_id, url=url, web_search=web_search)
 
     history.append(
         {

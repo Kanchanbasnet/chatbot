@@ -9,6 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from backend.database import Base
 
 if TYPE_CHECKING:
+    from backend.models.document_model import Document
     from backend.models.message_model import Message
 
 
@@ -20,6 +21,11 @@ class Conversation(Base):
         back_populates="conversation",
         cascade="all, delete-orphan",
         order_by="Message.id",
+    )
+    documents: Mapped[list[Document]] = relationship(
+        back_populates="conversation",
+        cascade="all, delete-orphan",
+        order_by="Document.id"
     )
 
     created_at: Mapped[datetime] = mapped_column(
