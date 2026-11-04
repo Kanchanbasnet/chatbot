@@ -19,7 +19,7 @@ def handle_chat(
     conversation_id: int | None = None,
     url: str | None = None,
     web_search: bool = False,
-    document_id:int | None = None
+    document_id: int | None = None,
 ):
 
     conversation = get_or_create_conversation(db, conversation_id)
@@ -29,17 +29,12 @@ def handle_chat(
         db=db,
         conversation_id=conv_id,
     )
-    context = get_context(db, query=question,document_id=document_id, url=url, web_search=web_search)
-
-    history.append(
-        {
-            "role": "user",
-            "content": question,
-        }
+    context = get_context(
+        db, query=question, document_id=document_id, url=url, web_search=web_search
     )
 
     try:
-        response = generate_response([*history], question, context)
+        response = generate_response(history, question, context)
 
     except Exception:
         logger.exception("Failed to generate LLM response")

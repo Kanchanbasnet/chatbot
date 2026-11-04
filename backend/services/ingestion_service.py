@@ -30,4 +30,9 @@ def ingestion_pipeline(text: str, document_id: int, conversation_id: int, filena
     
     
     
-    
+def retrieve_chunks(question: str, document_id: int, k: int = 4):
+    return vector_store.similarity_search(
+        question,
+        k=k,
+        filter={"document_id": document_id},
+    )
