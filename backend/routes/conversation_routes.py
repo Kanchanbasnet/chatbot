@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
-from backend.schemas.common_schema import success_response
 from backend.services.conversation_service import (
+    delete_conversation_by_conversation_id,
     get_all_conversations,
     get_conversation_by_id,
     get_conversation_messages_by_conversation_id,
@@ -32,6 +32,14 @@ def get_conversation_messages(conversation_id:int, db:Session= Depends(get_db)):
     response = get_conversation_messages_by_conversation_id(db, conversation_id)
     # return success_response(data=response, message='Messages retrieved Successfully.')
     return response
+
+
+@router.delete("")
+def delete_conversation(conversation_id: int, db:Session= Depends(get_db)):# noqa: B008
+    delete_conversation_by_conversation_id(db=db, conversation_id=conversation_id)
+    return {"message": "Deleted successfully."}
+    
+    
     
     
     

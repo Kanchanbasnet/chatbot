@@ -72,3 +72,18 @@ def get_conversation_messages_by_conversation_id(db: Session, conversation_id:in
         raise HTTPException(status_code=404, detail="Conversation not Found.")
     messages = db.query(Message).filter(Message.conversation_id == conversation_id).all()
     return messages
+
+
+def delete_conversation_by_conversation_id(db:Session, conversation_id:int):
+    if conversation_id is None:
+        logger.warning("Conversation Id is not provided.")
+        raise HTTPException(
+            status_code=400,
+            detail="Conversation Id is not provided."
+        )
+    conversation = db.get(Conversation, conversation_id)
+    if conversation is None:
+        raise HTTPException(status_code=404, detail='Conversation not Found.')
+    db.delete(conversation)
+    db.commit()
+    

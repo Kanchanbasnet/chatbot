@@ -9,12 +9,12 @@ load_dotenv()
 
 BACKEND_URL = os.getenv("BACKEND_URL")
 
-st.title("Conversational AI Chatbot")
-
 # Validate backend URL
 if not BACKEND_URL:
     st.error("BACKEND_URL is not configured.")
     st.stop()
+
+
 
 
 # Initialize session state
@@ -51,37 +51,72 @@ with st.sidebar:
         conversations = response.json()
 
         for conversation in conversations:
-            if st.button(
-                conversation["title"],
-                key=f"conversation_{conversation['id']}",
-                use_container_width=True,
-            ):
-                try:
-                    response = requests.get(
-                        f"{BACKEND_URL.rstrip('/')}/conversations/{conversation['id']}/messages",
-                        timeout=10,
-                    )
+            conversation_id = conversation["id"]
 
-                    response.raise_for_status()
+            # Conversation title and delete button
+            col1, col2 = st.columns([5, 1])
 
-                    messages = response.json()
+            with col1:
+                if st.button(
+                    conversation["title"],
+                    key=f"conversation_{conversation_id}",
+                    use_container_width=True,
+                ):
+                    try:
+                        response = requests.get(
+                            f"{BACKEND_URL.rstrip('/')}/conversations/"
+                            f"{conversation_id}/messages",
+                            timeout=10,
+                        )
 
-                    st.session_state.conversation_id = conversation["id"]
-                    st.session_state.document_id = None
+                        response.raise_for_status()
 
-                    st.session_state.messages = [
-                        {
-                            "role": message["role"].lower(),
-                            "content": message["content"],
-                        }
-                        for message in messages
-                    ]
+                        messages = response.json()
 
-                    st.rerun()
+                        st.session_state.conversation_id = conversation_id
+                        st.session_state.document_id = None
 
-                except requests.RequestException as e:
-                    st.error(f"Could not load conversation messages: {e}")
+                        st.session_state.messages = [
+                            {
+                                "role": message["role"].lower(),
+                                "content": message["content"],
+                            }
+                            for message in messages
+                        ]
 
+                        st.rerun()
+
+                    except requests.RequestException as e:
+                        st.error(
+                            f"Could not load conversation messages: {e}"
+                        )
+
+            with col2:
+                if st.button(
+                    "🗑️",
+                    key=f"delete_{conversation_id}",
+                    help="Delete conversation",
+                    use_container_width=True,
+                ):
+                    try:
+                        response = requests.delete(
+                            f"{BACKEND_URL.rstrip('/')}/conversations",
+                            params={"conversation_id": conversation_id},
+                            timeout=10,
+                        )
+
+                        response.raise_for_status()
+
+                        # Clear current chat if it was deleted
+                        if st.session_state.conversation_id == conversation_id:
+                            st.session_state.conversation_id = None
+                            st.session_state.document_id = None
+                            st.session_state.messages = []
+
+                        st.rerun()
+
+                    except requests.RequestException as e:
+                        st.error(f"Could not delete conversation: {e}")
 
     except requests.RequestException as e:
         st.error(f"Could not load conversations: {e}")
@@ -127,7 +162,6 @@ if chat_input:
 
                 result = response.json()
 
-                # Direct response: document_id
                 st.session_state.document_id = result["document_id"]
 
                 st.success(
@@ -136,7 +170,6 @@ if chat_input:
 
             except (requests.RequestException, KeyError) as e:
                 st.error(f"Could not upload {uploaded_file.name}: {e}")
-
 
     # Send user message
     if user_input and user_input.strip():
@@ -163,8 +196,8 @@ if chat_input:
 
                 result = response.json()
 
-                # Direct response: conversation_id and answer
                 answer = result["answer"]
+
                 st.session_state.conversation_id = result["conversation_id"]
 
                 st.write(answer)
