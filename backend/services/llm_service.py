@@ -2,6 +2,7 @@ import logging
 import os
 
 from dotenv import load_dotenv
+from langchain.agents import create_agent
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_groq import ChatGroq
 
@@ -41,11 +42,17 @@ prompt = ChatPromptTemplate.from_messages(
 chain = prompt | llm
 
 
-def generate_response(history, question, context=""):
-    logger.info("Sending message to LLM.")
-    response = chain.invoke(
-        {"history": history, "question": question, "context": context}
-    )
-    answer = response.content
-    logger.info("Successfully received response from LLM")
-    return answer
+def generate_response(history, question, tools):
+    agent = create_agent(llm, tools, system_prompt=SYSTEM_PROMPT)
+    messages = [{"role": m.role, "content": m.content} for m in history]
+    messages.append({"role": "user","content": question })
+    result = agent.invoke({"messages": messages})
+    return result["messages"][-1].content
+    
+    # logger.info("Sending message to LLM.")
+    # response = chain.invoke(
+    #     {"history": history, "question": question, "context": context}
+    # )
+    # answer = response.content
+    # logger.info("Successfully received response from LLM")
+    # return answer

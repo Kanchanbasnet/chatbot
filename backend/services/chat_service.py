@@ -5,10 +5,10 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from backend.models.message_model import Message
-from backend.services.context_service import get_context
 from backend.services.conversation_service import get_or_create_conversation
 from backend.services.history_service import get_conversation_history
 from backend.services.llm_service import generate_response
+from backend.services.tools import fetch_url, make_search_documents_tool, web_search
 
 logger = logging.getLogger(__name__)
 
@@ -17,8 +17,6 @@ def handle_chat(
     db: Session,
     question: str,
     conversation_id: int | None = None,
-    url: str | None = None,
-    web_search: bool = False,
     document_id: int | None = None,
 ):
 
@@ -32,12 +30,13 @@ def handle_chat(
         db=db,
         conversation_id=conv_id,
     )
-    context = get_context(
-        db, query=question, document_id=document_id, url=url, web_search=web_search
-    )
+    # context = get_context(
+    #     db, query=question, document_id=document_id, url=url, web_search=web_search
+    # )
+    tools = [fetch_url, web_search, make_search_documents_tool(db, document_id)]
 
     try:
-        response = generate_response(history, question, context)
+        response = generate_response(history, question, tools)
 
     except Exception:
         logger.exception("Failed to generate LLM response")

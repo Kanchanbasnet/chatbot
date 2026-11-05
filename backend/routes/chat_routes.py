@@ -10,8 +10,6 @@ from backend.services.file_upload_service import upload_file
 class ChatRequest(BaseModel):
     question: str = Field(min_length=2)
     conversation_id: int | None = None
-    url: str | None = None
-    web_search: bool = False
     document_id: int | None = None
 
 
@@ -25,8 +23,6 @@ def chat(body: ChatRequest, db: Session = Depends(get_db)):  # noqa: B008
             db,
             body.question,
             body.conversation_id,
-            body.url,
-            body.web_search,
             body.document_id,
         )
     except ValueError as e:
