@@ -24,6 +24,9 @@ def handle_chat(
 
     conversation = get_or_create_conversation(db, conversation_id)
     conv_id = conversation.id
+    
+    if conversation.title == "New Conversation":
+        conversation.title = question[:100]
 
     history = get_conversation_history(
         db=db,

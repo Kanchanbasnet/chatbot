@@ -82,6 +82,7 @@ with st.sidebar:
                 except requests.RequestException as e:
                     st.error(f"Could not load conversation messages: {e}")
 
+
     except requests.RequestException as e:
         st.error(f"Could not load conversations: {e}")
 
@@ -126,16 +127,16 @@ if chat_input:
 
                 result = response.json()
 
-                if result["success"]:
-                    st.session_state.document_id = result["data"]["document_id"]
-                    st.success(
-                        f"{uploaded_file.name} uploaded successfully."
-                    )
-                else:
-                    st.error(result["message"])
+                # Direct response: document_id
+                st.session_state.document_id = result["document_id"]
+
+                st.success(
+                    f"{uploaded_file.name} uploaded successfully."
+                )
 
             except (requests.RequestException, KeyError) as e:
                 st.error(f"Could not upload {uploaded_file.name}: {e}")
+
 
     # Send user message
     if user_input and user_input.strip():
@@ -162,20 +163,15 @@ if chat_input:
 
                 result = response.json()
 
-                if result["success"]:
-                    answer = result["data"]["answer"]
+                # Direct response: conversation_id and answer
+                answer = result["answer"]
+                st.session_state.conversation_id = result["conversation_id"]
 
-                    st.session_state.conversation_id = (
-                        result["data"]["conversation_id"]
-                    )
+                st.write(answer)
 
-                    st.write(answer)
-
-                    st.session_state.messages.append(
-                        {"role": "assistant", "content": answer}
-                    )
-                else:
-                    st.error(result["message"])
+                st.session_state.messages.append(
+                    {"role": "assistant", "content": answer}
+                )
 
             except (requests.RequestException, KeyError) as e:
                 st.error(

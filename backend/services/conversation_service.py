@@ -43,7 +43,7 @@ def get_or_create_conversation(
 
 
 def get_all_conversations(db: Session):
-    conversations = db.query(Conversation).all()
+    conversations = db.query(Conversation).order_by(Conversation.created_at.desc()).all()
     return conversations
 
 
