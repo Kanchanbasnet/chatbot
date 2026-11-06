@@ -160,9 +160,7 @@ if chat_input:
 
                 response.raise_for_status()
 
-                result = response.json()
 
-                st.session_state.document_id = result["document_id"]
 
                 st.success(
                     f"{uploaded_file.name} uploaded successfully."
@@ -189,18 +187,23 @@ if chat_input:
                         "conversation_id": st.session_state.conversation_id,
                         "document_id": st.session_state.document_id,
                     },
+                    stream=True,
                     timeout=(10, 120),
                 )
 
                 response.raise_for_status()
+                response.encoding = "utf-8"
+                
+                st.session_state.conversation_id = int(response.headers["X-Conversation-Id"])
 
-                result = response.json()
+                
 
-                answer = result["answer"]
+                def token_generator():
+                    for chunk in response.iter_content(chunk_size=None, decode_unicode=True):
+                        if chunk:
+                            yield chunk
+                answer = st.write_stream(token_generator())
 
-                st.session_state.conversation_id = result["conversation_id"]
-
-                st.write(answer)
 
                 st.session_state.messages.append(
                     {"role": "assistant", "content": answer}
