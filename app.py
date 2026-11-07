@@ -159,6 +159,7 @@ if chat_input:
                 )
 
                 response.raise_for_status()
+                st.session_state.document_id = response.json()["document_id"]
 
 
 
@@ -168,6 +169,8 @@ if chat_input:
 
             except (requests.RequestException, KeyError) as e:
                 st.error(f"Could not upload {uploaded_file.name}: {e}")
+        if not (user_input and user_input.strip()):
+            user_input = "Please give me a short summary of this document."
 
     # Send user message
     if user_input and user_input.strip():

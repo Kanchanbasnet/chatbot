@@ -11,13 +11,12 @@ from langchain_core.messages import AIMessageChunk
 logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """
-You are a helpful, friendly, and knowledgeable AI assistant.
-Answer questions on any topic.
-Use simple language whenever possible.
-For complex topics, explain the key ideas step by step.
-If you are unsure about something, be honest rather than inventing facts.
-If context is provided, use it to answer. If the context does not contain the answer, say so.
-If no context is provided, answer from your own knowledge.
+You are a helpful, friendly AI assistant.
+Use simple language. For complex topics, explain step by step.
+If you are unsure, be honest rather than inventing facts.
+Use the search_documents tool for questions about the user's uploaded document.
+Use web_search for current information and fetch_url for links the user shares.
+Answer general questions from your own knowledge.
 """
 
 
