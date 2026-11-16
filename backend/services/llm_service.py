@@ -3,10 +3,9 @@ import os
 
 from dotenv import load_dotenv
 from langchain.agents import create_agent
+from langchain_core.messages import AIMessageChunk
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_groq import ChatGroq
-from langchain_core.messages import AIMessageChunk
-
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +47,6 @@ def generate_response(history, question, tools):
     messages = [{"role": m.role, "content": m.content} for m in history]
     messages.append({"role": "user","content": question })
     result = agent.invoke({"messages": messages})
-    # print(result)
     return result["messages"][-1].content
 
 def generate_stream_response(history, question,tools):
@@ -58,15 +56,4 @@ def generate_stream_response(history, question,tools):
     for chunk, metadata in agent.stream({"messages": messages}, stream_mode="messages"):
         if isinstance(chunk, AIMessageChunk) and chunk.content and not chunk.tool_call_chunks:
             yield chunk.content
-            
-        
-        # if chunk["type"] == "AIMessageChunk" and chunk.content:
-        #     yield chunk.content
-    
-    # logger.info("Sending message to LLM.")
-    # response = chain.invoke(
-    #     {"history": history, "question": question, "context": context}
-    # )
-    # answer = response.content
-    # logger.info("Successfully received response from LLM")
-    # return answer
+
