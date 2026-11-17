@@ -1,13 +1,11 @@
 import logging
 
-from fastapi import HTTPException
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
 
 from backend.models.message_model import Message
 from backend.services.conversation_service import get_or_create_conversation
 from backend.services.history_service import get_conversation_history
-from backend.services.llm_service import generate_response, generate_stream_response
+from backend.services.llm_service import generate_stream_response
 from backend.services.tools import fetch_url, make_search_documents_tool, web_search
 
 logger = logging.getLogger(__name__)

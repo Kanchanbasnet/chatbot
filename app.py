@@ -125,6 +125,9 @@ with st.sidebar:
 # Display existing messages
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
+        # show attached documents (if any)
+        for name in message.get("files", []):
+            st.caption(f"📎 {name}")
         st.write(message["content"])
 
 
@@ -138,51 +141,55 @@ chat_input = st.chat_input(
 if chat_input:
     user_input = chat_input.text
     uploaded_files = chat_input.files
+    uploaded_names = []   # names of files uploaded successfully
 
     # Upload files
     if uploaded_files:
         for uploaded_file in uploaded_files:
             try:
-                response = requests.post(
-                    f"{BACKEND_URL.rstrip('/')}/chat/upload",
-                    files={
-                        "file": (
-                            uploaded_file.name,
-                            uploaded_file.getvalue(),
-                            uploaded_file.type,
-                        )
-                    },
-                    params={
-                        "conversation_id": st.session_state.conversation_id
-                    },
-                    timeout=120,
-                )
+                with st.spinner(f"Uploading {uploaded_file.name}..."):
+                    response = requests.post(
+                        f"{BACKEND_URL.rstrip('/')}/chat/upload",
+                        files={
+                            "file": (
+                                uploaded_file.name,
+                                uploaded_file.getvalue(),
+                                uploaded_file.type,
+                            )
+                        },
+                        params={
+                            "conversation_id": st.session_state.conversation_id
+                        },
+                        timeout=120,
+                    )
 
                 response.raise_for_status()
                 st.session_state.document_id = response.json()["document_id"]
-
-
-
-                st.success(
-                    f"{uploaded_file.name} uploaded successfully."
-                )
+                uploaded_names.append(uploaded_file.name)
 
             except (requests.RequestException, KeyError) as e:
                 st.error(f"Could not upload {uploaded_file.name}: {e}")
+
         if not (user_input and user_input.strip()):
             user_input = "Please give me a short summary of this document."
 
     # Send user message
     if user_input and user_input.strip():
         st.session_state.messages.append(
-            {"role": "user", "content": user_input}
+            {"role": "user", "content": user_input, "files": uploaded_names}
         )
 
         with st.chat_message("user"):
+            for name in uploaded_names:
+                st.caption(f"📎 {name}")
             st.write(user_input)
 
         with st.chat_message("assistant"):
             try:
+                # show "Thinking..." until the first word arrives
+                thinking = st.empty()
+                thinking.markdown("⏳ *Thinking...*")
+
                 response = requests.post(
                     f"{BACKEND_URL.rstrip('/')}/chat",
                     json={
@@ -196,23 +203,30 @@ if chat_input:
 
                 response.raise_for_status()
                 response.encoding = "utf-8"
-                
-                st.session_state.conversation_id = int(response.headers["X-Conversation-Id"])
 
-                
+                st.session_state.conversation_id = int(
+                    response.headers["X-Conversation-Id"]
+                )
 
                 def token_generator():
-                    for chunk in response.iter_content(chunk_size=None, decode_unicode=True):
+                    first = True
+                    for chunk in response.iter_content(
+                        chunk_size=None, decode_unicode=True
+                    ):
                         if chunk:
+                            if first:
+                                thinking.empty()   # remove "Thinking..."
+                                first = False
                             yield chunk
-                answer = st.write_stream(token_generator())
 
+                answer = st.write_stream(token_generator())
 
                 st.session_state.messages.append(
                     {"role": "assistant", "content": answer}
                 )
 
             except (requests.RequestException, KeyError) as e:
+                thinking.empty()
                 st.error(
                     f"Could not get an answer from the AI backend: {e}"
                 )
