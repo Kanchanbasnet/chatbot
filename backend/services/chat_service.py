@@ -11,8 +11,8 @@ from backend.services.tools import fetch_url, make_search_documents_tool, web_se
 logger = logging.getLogger(__name__)
 
 
-def prepare_chat(db, question, conversation_id, document_id):
-    conversation = get_or_create_conversation(db, conversation_id)
+def prepare_chat(db, question, conversation_id, user_id,document_id):
+    conversation = get_or_create_conversation(db,user_id, conversation_id)
     conv_id = conversation.id
     if conversation.title == "New Conversation":
         conversation.title = question[:100]

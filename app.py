@@ -1,5 +1,6 @@
 
 import os
+from urllib.parse import quote
 
 import requests
 import streamlit as st
@@ -13,6 +14,20 @@ BACKEND_URL = os.getenv("BACKEND_URL")
 if not BACKEND_URL:
     st.error("BACKEND_URL is not configured.")
     st.stop()
+
+    
+# Login check
+if not st.user.is_logged_in:
+    st.title("Please log in")
+    st.button("Log in with Google", on_click=st.login)
+    st.stop()
+    
+
+def get_headers():
+    return {
+        "X-User-Email": st.user.email,
+        "X-User-Name": quote(st.user.name or ""),
+    }
 
 
 
@@ -31,6 +46,8 @@ if "document_id" not in st.session_state:
 # Sidebar: Conversation history
 with st.sidebar:
     st.title("Chat History")
+    st.caption(f"Logged in as {st.user.name}")
+    st.button("Log out", on_click=st.logout)
 
     if st.button("＋ New Chat", use_container_width=True):
         st.session_state.conversation_id = None
@@ -43,6 +60,7 @@ with st.sidebar:
     try:
         response = requests.get(
             f"{BACKEND_URL.rstrip('/')}/conversations",
+            headers=get_headers(),
             timeout=10,
         )
 
@@ -66,6 +84,7 @@ with st.sidebar:
                         response = requests.get(
                             f"{BACKEND_URL.rstrip('/')}/conversations/"
                             f"{conversation_id}/messages",
+                            headers=get_headers(),
                             timeout=10,
                         )
 
@@ -102,6 +121,7 @@ with st.sidebar:
                         response = requests.delete(
                             f"{BACKEND_URL.rstrip('/')}/conversations",
                             params={"conversation_id": conversation_id},
+                            headers=get_headers(),
                             timeout=10,
                         )
 
@@ -160,6 +180,7 @@ if chat_input:
                         params={
                             "conversation_id": st.session_state.conversation_id
                         },
+                        headers=get_headers(),
                         timeout=120,
                     )
 
@@ -198,6 +219,7 @@ if chat_input:
                         "document_id": st.session_state.document_id,
                     },
                     stream=True,
+                    headers=get_headers(),
                     timeout=(10, 120),
                 )
 

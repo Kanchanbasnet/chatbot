@@ -11,8 +11,8 @@ from backend.services.ingestion_service import ingestion_pipeline
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 
 
-async def upload_file(db: Session, conversation_id: int | None = None, file: UploadFile = File):
-    conversation = get_or_create_conversation(db, conversation_id)
+async def upload_file(db: Session, conversation_id: int | None = None, file: UploadFile = File, user_id: int | None = None):
+    conversation = get_or_create_conversation(db,user_id, conversation_id)
     convo_id = conversation.id
 
     if not file.filename:
