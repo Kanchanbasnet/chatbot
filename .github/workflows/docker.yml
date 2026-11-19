@@ -34,4 +34,4 @@ jobs:
         with:
           context: .
           push: ${{ github.event_name == 'push' }}
-          tags: ghcr.io/kanchanbasnet/ragchatbot:latest
+          tags: ghcr.io/kanchanbasnet/chatbot:latest
